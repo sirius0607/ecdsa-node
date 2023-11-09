@@ -14,3 +14,13 @@ Puis :
 ```
 nodemon index
 ```
+
+# debug node js
+menu vertical gauche debug avec vs code
+
+générer un launch.json
+
+dans package.json 
+```
+    "debug": "nodemon --inspect index.cjs"
+```
