@@ -1,10 +1,9 @@
-import { useState } from "react";
-import server from "./server";
-import { toHex } from "ethereum-cryptography/utils";
 import { keccak256 } from "ethereum-cryptography/keccak";
 import { utf8ToBytes } from "ethereum-cryptography/utils";
+import { useState } from "react";
+import server from "./server";
 
-import * as secp from "ethereum-cryptography/secp256k1";
+import { secp256k1 } from "ethereum-cryptography/secp256k1";
 
 function hashMessage(message) {
   return keccak256(utf8ToBytes(message));
@@ -12,11 +11,7 @@ function hashMessage(message) {
 
 async function signMessage(msg, privateKey) {
   let msgHash = hashMessage(msg);
-  const signature = await secp.sign(msgHash, privateKey, {recovered: true});
-  // Uint8Array to Bigint format conversion
-  // because it doesn't seem possible to transfert and Uint8Array to the server
-  let sig = secp.Signature.fromDER(toHex(signature[0]));
-  return {...sig, recovery: signature[1]};
+  return secp256k1.sign(msgHash, privateKey);
 }
 
 const stringifyBigInts = obj =>{
@@ -41,12 +36,11 @@ function Transfer({ address, setBalance, privateKey, setPrivateKey }) {
     evt.preventDefault();
 
     const msg = `send ${sendAmount} to ${recipient.slice(0,20)}`;
-    const signatureBigInt = await signMessage(msg, privateKey);
-    console.log("signatureBigInt from client: ", signatureBigInt);
+    const signature = await signMessage(msg, privateKey);
+    console.log("signature from client: ", signature);
      // stringify bigints before sending to server to avoid an error
      // Can't use JSON.stringify because it do not know how to serialize BigInts
-     const sigStringed = stringifyBigInts(signatureBigInt);
-     //const sigStringed = JSON.stringify(signatureBigInt);
+     const sigStringed = stringifyBigInts(signature);
     try {
       const {
         data: { balance },
@@ -54,7 +48,6 @@ function Transfer({ address, setBalance, privateKey, setPrivateKey }) {
         sender: address,
         msg: msg,
         sigStringed: sigStringed,
-        // recoveryBit: recoveryBit,
         amount: parseInt(sendAmount),
         recipient,
       });

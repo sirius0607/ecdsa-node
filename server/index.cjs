@@ -12,9 +12,9 @@ app.use(cors());
 app.use(express.json());
 
 const balances = {
-  "049895b73b7e721001f6d0e7db66c90d4ccd5e2123845194f7f71a4a3834c8ac53abed1288016bc462360e79e56eb7061ffac6a0502e54bfa26c962789fa3dac95": 100,
-  "04cee348282ece57fa7d5eba401088541599ee51c67ec1b614d5984b9189975a5fb5a86d36929496832760b76106f926e24965b4efce3a0fa3b6382bf373b16ad8": 50,
-  "0426ba37288d9883f700a48bca6403b9e41c3f50610386f7824e28ffc417bb31471fe7912ea36dd99f35cbe43945ef15eb3650e1955c786f952c990d9c2822a65d": 75,
+  "0361a4d74cf549cde9a7fc9628feb8dc156aa7636c7564ae532f0855f3f173e53f": 100,
+  "02e8d1c906a14d6ebecb23c67457ecabd7d0a4a3b4ae9384fdaa78a3be5c8eca83": 50,
+  "021a617c79b69d9904b99e826cdb423edd7fabf24c83b6e9eebce82d348f1aaa57": 75,
 };
 
 function hashMessage(message) {
@@ -23,20 +23,7 @@ function hashMessage(message) {
 
 app.get("/balance/:address", (req, res) => {
   const { address } = req.params;
-  //const sigStringed = req.query.sigStr;
-  //const sig = new TextEncoder().encode(sigAsString);
-  //let sig = new Uint8Array(Buffer.from(sigAsString));
-  //let sig = Buffer.from(sigStr, "utf8");
-  //let sig = utf8ToBytes(sigJson);
-  //const buffer = Buffer.from(sigJson, 'utf8');
-  //const sig = new Uint8Array(buffer);
-  // const sig = {
-  //   ...sigStringed,
-  //   r: BigInt(sigStringed.r),
-  //   s: BigInt(sigStringed.s)
-  // }
-  //const address = toHex(secp.recoverPublicKey(msgHash, sig, recoveryBit));
-  console.log("address on server: ", address);
+  console.log("balance: address on server: ", address);
   const balance = balances[address] || 0;
   res.send({ balance });
 });
@@ -52,20 +39,14 @@ app.post("/send", (req, res) => {
     s: BigInt(sigStringed.s)
   }
 
-  // const signature = {};
-  // signature.r = BigInt(sigStringed.r.slice(0, -1));
-  // signature.s = BigInt(sigStringed.s.slice(0,-1));
-  // signature.recovery = parseInt(sig.recovery);
-  // //const signatureObj = JSON.parse(signatureJson);
-  // const signatureObj2 = { r: BigInt(sigStringed.r), s: BigInt(sigStringed.s) }
-  //const address = toHex(secp.recoverPublicKey(hashMessage(msg), sig, parseInt(sig.recovery)));
-  // TODO always false but I don't know why
-  let isOk = secp.verify(sig, hashMessage(msg), sender) === true;
+  let isOk = secp.secp256k1.verify(sig, hashMessage(msg), sender) === true;
   console.log("verify = ", isOk);
   if(!isOk) {
     console.log("Wrong address!");
     res.status(400).send({ message: "Wrong address!" });
     return;
+  } else {
+    console.log("Signature verified successfully!");
   }
   setInitialBalance(sender);
   setInitialBalance(recipient);
